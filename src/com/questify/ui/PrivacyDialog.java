@@ -90,12 +90,32 @@ public class PrivacyDialog {
 	
 	//AI generated but still related to app
 	private String getPolicyText() {
-		return 	"Questify stores your tasks and app settings only on the device where the app runs. " +
-				"No data is transmitted to any server. The app writes a simple plain-text tasks file " +
-		        "and a properties file to your user home folder (e.g., ~/.questify/tasks.txt and ~/.questify/config.properties). " +
-		        "The privacy dialog presented at first launch records your explicit acceptance in the local config file " +
-		        "so you are not asked again. Questify does not collect, share, or sell any personal information. " +
-		        "If you decline the privacy policy, the app will quit and no files will be written.";
+		return
+				  "Questify Privacy Policy — Version 1.1 (Last updated: 2025-10-28)\n\n"
+				+ "Summary:\n"
+				+ "Questify is an offline, local-only application. It stores your tasks and app settings only on the device where the app runs and does not transmit any data to external servers. If you decline this policy the app will quit.\n\n"
+				+ "1. What we collect\n"
+				+ "- Task data: each task's title, completion state, and an internal identifier. These are stored in a plain-text file (e.g., ~/.questify/tasks.txt).\n"
+				+ "- App settings: simple application preferences such as whether you accepted this policy and your XP value (e.g., ~/.questify/config.properties).\n\n"
+				+ "2. Purpose of collection\n"
+				+ "Data is collected and stored only to provide the app's core functionality: saving and restoring your tasks and user preferences so the app behaves as expected between launches.\n\n"
+				+ "3. Where data is stored and format\n"
+				+ "All data is written locally to the user's profile in a folder named .questify (for example: ~/.questify on Unix-like systems). Files are stored in plain text unless you apply OS-level encryption. Questify does not encrypt files itself.\n\n"
+				+ "4. Sharing and third parties\n"
+				+ "Questify does not send data to remote servers, nor does it share or sell your information to third parties. If you explicitly export or share a file from your device (for example, by attaching it to an email), that action is initiated by you and outside the app's control.\n\n"
+				+ "5. Retention and deletion\n"
+				+ "Data is retained until you delete it. To remove all Questify data, delete the .questify directory in your user home folder (or the equivalent on your operating system). There is no automatic or remote deletion.\n\n"
+				+ "6. Security\n"
+				+ "Files are stored locally in plain text. Protect access to your device using your operating system account controls and disk-encryption options if you require stronger security. Avoid storing sensitive personal information in task text.\n\n"
+				+ "7. Children\n"
+				+ "Questify is not intended for children under 13. The app does not knowingly collect information from children.\n\n"
+				+ "8. Changes to this policy\n"
+				+ "If Questify's data practices change (for example, if syncing, telemetry, or external backups are added), we will update this policy and show the updated text in the app so users can review and re-accept it.\n\n"
+				+ "9. Contact\n"
+				+ "Questions about this policy or requests related to data stored by Questify can be sent to: privacy@questify.ca .\n\n"
+				+ "How to remove data now:\n"
+				+ "1) Close Questify. 2) Delete the .questify folder in your home directory (for example: rm -rf ~/.questify on Unix-like systems). This removes both tasks and app settings.\n\n"
+				+ "By accepting below you confirm that you understand and agree that Questify will store data locally on your device as described above.\n";
 
     }
 }
