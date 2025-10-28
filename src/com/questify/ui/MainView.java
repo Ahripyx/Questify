@@ -62,7 +62,7 @@ public class MainView extends JFrame {
 		JButton addBtn = new JButton("Add");
 		addBtn.setMnemonic(KeyEvent.VK_N);
 		JButton delBtn = new JButton("Delete");
-		JButton toggleBtn = new JButton("Done");
+		JButton toggleBtn = new JButton("Toggle");
 		
 		int gap = 8;
         int cols = 3; // 3 main buttons
@@ -160,6 +160,7 @@ public class MainView extends JFrame {
             t.setDone(false);
             completedModel.remove(cidx);
             activeModel.addElement(t);
+            removeXp(10);
             saveTasksAsync();
         }
     }
@@ -193,6 +194,11 @@ public class MainView extends JFrame {
         xp += amount;
         xpLabel.setText("XP: " + xp);
     }
+	
+	private void removeXp(int amount) {
+		xp -= amount;
+		xpLabel.setText("XP: " + xp);
+	}
 	
 	private void loadTasks() {
         SwingWorker<List<Task>,Void> w = new SwingWorker<>() {
