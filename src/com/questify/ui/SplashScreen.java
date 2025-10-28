@@ -2,6 +2,8 @@ package com.questify.ui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.net.URL;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -11,6 +13,8 @@ public class SplashScreen {
     private final JProgressBar bar;
 	
 	private final int minDisplayMs;
+	
+	private static final int ICON_SIZE = 80;
 	
 	
 	public SplashScreen(int minDisplayMs, Dimension size) {
@@ -23,10 +27,36 @@ public class SplashScreen {
 		p.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
 		p.setBackground(Color.WHITE);
 		
-		JLabel label = new JLabel("Questify", JLabel.CENTER);
-		label.setFont(label.getFont().deriveFont(28f).deriveFont(Font.BOLD));
-		label.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
-		p.add(label, BorderLayout.CENTER);
+		JPanel topRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 10));
+        topRow.setOpaque(false);
+        
+        topRow.setBorder(BorderFactory.createEmptyBorder(350, 0, 8, 0));
+        
+        JLabel iconLabel = new JLabel();
+        ImageIcon icon = loadAndScaleIcon("/resources/questify.png", ICON_SIZE, ICON_SIZE);
+        if (icon == null) {
+            // try alternate classpath location
+            icon = loadAndScaleIcon("/com/questify/ui/resources/questify.png", ICON_SIZE, ICON_SIZE);
+        }
+        if (icon == null) {
+            // try filesystem fallback (project-root/resources/questify.png)
+            icon = loadAndScaleIconFromFile("resources/questify.png", ICON_SIZE, ICON_SIZE);
+        }
+        if (icon != null) {
+            iconLabel.setIcon(icon);
+        } else {
+            iconLabel.setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
+        }
+        
+		JLabel title = new JLabel("Questify", JLabel.CENTER);
+		title.setFont(title.getFont().deriveFont(60f).deriveFont(Font.BOLD));
+		title.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        title.setOpaque(false);
+        
+        topRow.add(iconLabel);
+        topRow.add(title);
+        
+        p.add(topRow, BorderLayout.CENTER);
 		
 		bar = new JProgressBar(0,100);
 		bar.setStringPainted(true);
@@ -83,5 +113,32 @@ public class SplashScreen {
         };
         worker.execute();
         dialog.setVisible(true);
+    }
+	
+    // Try to load an icon from the classpath resource (resourcePath). Return null if not found.
+    private ImageIcon loadAndScaleIcon(String resourcePath, int w, int h) {
+        try {
+            URL u = getClass().getResource(resourcePath);
+            if (u == null) return null;
+            ImageIcon raw = new ImageIcon(u);
+            Image img = raw.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            return new ImageIcon(img);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    // Try to load an icon from the filesystem (relative to working dir). Return null if not found.
+    private ImageIcon loadAndScaleIconFromFile(String filePath, int w, int h) {
+        try {
+            File f = new File(filePath);
+            if (!f.exists()) return null;
+            URL u = f.toURI().toURL();
+            ImageIcon raw = new ImageIcon(u);
+            Image img = raw.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            return new ImageIcon(img);
+        } catch (Exception ex) {
+            return null;
+        }
     }
 }
