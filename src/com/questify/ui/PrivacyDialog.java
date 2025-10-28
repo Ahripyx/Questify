@@ -16,6 +16,10 @@ public class PrivacyDialog {
 	}
 	
 	public boolean showModal(Component parent) {
+		JLabel title = new JLabel("Privacy Policy", JLabel.CENTER);
+		title.setFont(title.getFont().deriveFont(Font.BOLD, 24f));
+		title.setBorder(BorderFactory.createEmptyBorder(10, 10, 8, 10));
+		
 		JTextArea ta = new JTextArea(getPolicyText());
 		ta.setEditable(false);
 		ta.setLineWrap(true);
@@ -30,6 +34,9 @@ public class PrivacyDialog {
 		JButton decline = new JButton("Decline");
 		
 		final JDialog dialog = new JDialog((Frame)null, "Privacy Policy", true);
+		
+		dialog.getContentPane().add(title, BorderLayout.NORTH);
+		
 		JPanel bp = new JPanel();
 		bp.add(accept);
 		bp.add(decline);
@@ -52,12 +59,14 @@ public class PrivacyDialog {
 		return accepted;
 		}
 	
-	//AI generated privacy policy for time being
+	//AI generated but still related to app
 	private String getPolicyText() {
-        return "Privacy Policy (example):\n\n" +
-               "Questify stores your tasks locally in a text file on your computer. " +
-               "No data is sent off-device. The app uses a simple local file to persist tasks " +
-               "and a small properties file to record that you accepted this policy.\n\n" +
-               "If you decline, the app will exit.";
+		return 	"Questify stores your tasks and app settings only on the device where the app runs. " +
+				"No data is transmitted to any server. The app writes a simple plain-text tasks file " +
+		        "and a properties file to your user home folder (e.g., ~/.questify/tasks.txt and ~/.questify/config.properties). " +
+		        "The privacy dialog presented at first launch records your explicit acceptance in the local config file " +
+		        "so you are not asked again. Questify does not collect, share, or sell any personal information. " +
+		        "If you decline the privacy policy, the app will quit and no files will be written.";
+
     }
 }
