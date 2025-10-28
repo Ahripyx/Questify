@@ -343,10 +343,11 @@ public class MainView extends JFrame {
         }
     }
 	
-	private void onAdd() {
+    private void onAdd() {
 		String title = JOptionPane.showInputDialog(this, "Task title:");
         if (title != null && !title.trim().isEmpty()) {
-            Task t = new Task(UUID.randomUUID().toString(), title.trim(), false);
+            String formatted = formatTitle(title);
+            Task t = new Task(UUID.randomUUID().toString(), formatted, false);
             activeModel.addElement(t);
             saveTasksAsync();
 
@@ -406,7 +407,8 @@ public class MainView extends JFrame {
             Task t = activeModel.get(idx);
             String s = JOptionPane.showInputDialog(this, "Edit task title:", t.getTitle());
             if (s != null && !s.trim().isEmpty()) {
-                t.setTitle(s.trim());
+                String formatted = formatTitle(s);
+                t.setTitle(formatted);
                 activeModel.set(idx, t);
                 saveTasksAsync();
             }
@@ -417,7 +419,8 @@ public class MainView extends JFrame {
             Task t = completedModel.get(idx);
             String s = JOptionPane.showInputDialog(this, "Edit task title:", t.getTitle());
             if (s != null && !s.trim().isEmpty()) {
-                t.setTitle(s.trim());
+                String formatted = formatTitle(s);
+                t.setTitle(formatted);
                 completedModel.set(idx, t);
                 saveTasksAsync();
             }
@@ -485,6 +488,14 @@ public class MainView extends JFrame {
             }
         };
         w.execute();
+    }
+	
+	private String formatTitle(String s) {
+        if (s == null) return "";
+        String trimmed = s.trim();
+        if (trimmed.isEmpty()) return trimmed;
+        String lower = trimmed.toLowerCase(Locale.getDefault());
+        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 	
 	private class TaskCellRenderer implements ListCellRenderer<Task> {
