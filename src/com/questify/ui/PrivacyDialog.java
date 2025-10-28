@@ -4,6 +4,8 @@ import com.questify.util.ConfigStore;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.KeyEvent;
 
 public class PrivacyDialog {
 	private final ConfigStore cfg;
@@ -54,6 +56,33 @@ public class PrivacyDialog {
 			accepted = false;
 			dialog.dispose();
 		});
+		
+		// After creating accept/decline and dialog:
+		dialog.getRootPane().setDefaultButton(accept); // Enter will activate Accept
+		
+		// Set accessible names/description
+		title.getAccessibleContext().setAccessibleName("Privacy Policy Title");
+		ta.getAccessibleContext().setAccessibleName("Privacy policy text");
+		ta.getAccessibleContext().setAccessibleDescription("Detailed description of how Questify stores data on this device");
+		
+		accept.getAccessibleContext().setAccessibleName("Accept privacy policy");
+		accept.getAccessibleContext().setAccessibleDescription("Accept the privacy policy and continue to the app");
+		decline.getAccessibleContext().setAccessibleName("Decline privacy policy");
+		decline.getAccessibleContext().setAccessibleDescription("Decline the privacy policy and exit the app");
+		
+		// Bind ESC to decline (close)
+		dialog.getRootPane().registerKeyboardAction(e -> {
+		    accepted = false;
+		    dialog.dispose();
+		}, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+		
+		// Set initial focus to Accept button after showing (callable before setVisible)
+		accept.addHierarchyListener(e -> {
+		    if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && accept.isShowing()) {
+		        accept.requestFocusInWindow();
+		    }
+		});
+		
 		
 		dialog.setVisible(true);
 		return accepted;

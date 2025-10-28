@@ -124,6 +124,52 @@ public class MainView extends JFrame {
         activeList.addMouseListener(editOnDouble);
         completedList.addMouseListener(editOnDouble);
         
+        //WCAG related stuff
+        activeList.getAccessibleContext().setAccessibleName("Active Tasks List");
+        activeList.getAccessibleContext().setAccessibleDescription("List of active tasks. Use arrow keys to navigate, Enter to edit, Delete to remove, Space to toggle completion.");
+        
+        completedList.getAccessibleContext().setAccessibleName("Completed Tasks List");
+        completedList.getAccessibleContext().setAccessibleDescription("List of completed tasks. Use arrow keys to navigate, Enter to edit, Delete to remove, Space to toggle completion.");
+        
+        // Expose scroll panes to accessibility
+        activeScroll.getAccessibleContext().setAccessibleName("Active Tasks");
+        activeScroll.getAccessibleContext().setAccessibleDescription("Contains the active tasks list");
+        completedScroll.getAccessibleContext().setAccessibleName("Completed Tasks");
+        completedScroll.getAccessibleContext().setAccessibleDescription("Contains the completed tasks list");
+        
+        // Buttons: accessible name, description and tooltip
+        addBtn.setToolTipText("Add a new task (Alt+N)");
+        addBtn.getAccessibleContext().setAccessibleName("Add task");
+        addBtn.getAccessibleContext().setAccessibleDescription("Create a new task. Shortcut: Alt+N");
+        
+        delBtn.setToolTipText("Delete selected task");
+        delBtn.getAccessibleContext().setAccessibleName("Delete task");
+        delBtn.getAccessibleContext().setAccessibleDescription("Delete the selected task");
+        
+        toggleBtn.setToolTipText("Toggle selected task between active and completed");
+        toggleBtn.getAccessibleContext().setAccessibleName("Toggle task");
+        toggleBtn.getAccessibleContext().setAccessibleDescription("Mark selected task complete or incomplete");
+        
+        // XP label accessible
+        xpLabel.getAccessibleContext().setAccessibleName("Experience points");
+        xpLabel.getAccessibleContext().setAccessibleDescription("Your earned experience points");
+        
+        // Keyboard: Enter to edit, Space to toggle (for focused list)
+        InputMap activeIM = activeList.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap activeAM = activeList.getActionMap();
+        activeIM.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "edit");
+        activeAM.put("edit", new AbstractAction() { public void actionPerformed(ActionEvent e) { onEdit(); }});
+        activeIM.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "toggle");
+        activeAM.put("toggle", new AbstractAction() { public void actionPerformed(ActionEvent e) { onToggle(); }});
+        
+        
+        InputMap compIM = completedList.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap compAM = completedList.getActionMap();
+        compIM.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "edit");
+        compAM.put("edit", new AbstractAction() { public void actionPerformed(ActionEvent e) { onEdit(); }});
+        compIM.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "toggle");
+        compAM.put("toggle", new AbstractAction() { public void actionPerformed(ActionEvent e) { onToggle(); }});
+        
         loadTasks();
 	}
 	

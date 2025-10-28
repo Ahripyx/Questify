@@ -63,6 +63,15 @@ public class SplashScreen {
 		bar.setBorder(BorderFactory.createEmptyBorder(10, 12, 12, 12));
 		p.add(bar, BorderLayout.SOUTH);
 		
+		title.getAccessibleContext().setAccessibleName("Questify");
+		title.getAccessibleContext().setAccessibleDescription("Application name");
+
+		iconLabel.getAccessibleContext().setAccessibleName("Questify icon");
+		iconLabel.getAccessibleContext().setAccessibleDescription("App icon for Questify");
+
+		bar.getAccessibleContext().setAccessibleName("Loading progress");
+		bar.getAccessibleContext().setAccessibleDescription("Shows application startup progress percentage");
+		
 		dialog.getContentPane().add(p);
 		 if (size == null) {
 	            dialog.setSize(420, 160);
