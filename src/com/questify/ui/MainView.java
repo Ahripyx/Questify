@@ -22,6 +22,8 @@ public class MainView extends JFrame {
 	private int xp = 0;
 	private final Dimension phoneSize;
 	
+	private JList<? extends Task> lastListFocused;
+	
 	public MainView(TaskStore store, Dimension phoneSize, ConfigStore cfg) {
         super("Questify");
         this.store = store;
@@ -153,32 +155,212 @@ public class MainView extends JFrame {
         // XP label accessible
         xpLabel.getAccessibleContext().setAccessibleName("Experience points");
         xpLabel.getAccessibleContext().setAccessibleDescription("Your earned experience points");
+        xpLabel.setFocusable(false);
         
-        // Keyboard: Enter to edit, Space to toggle (for focused list)
-        InputMap activeIM = activeList.getInputMap(JComponent.WHEN_FOCUSED);
-        ActionMap activeAM = activeList.getActionMap();
-        activeIM.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "edit");
-        activeAM.put("edit", new AbstractAction() { public void actionPerformed(ActionEvent e) { onEdit(); }});
-        activeIM.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "toggle");
-        activeAM.put("toggle", new AbstractAction() { public void actionPerformed(ActionEvent e) { onToggle(); }});
-        
-        
-        InputMap compIM = completedList.getInputMap(JComponent.WHEN_FOCUSED);
-        ActionMap compAM = completedList.getActionMap();
-        compIM.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "edit");
-        compAM.put("edit", new AbstractAction() { public void actionPerformed(ActionEvent e) { onEdit(); }});
-        compIM.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "toggle");
-        compAM.put("toggle", new AbstractAction() { public void actionPerformed(ActionEvent e) { onToggle(); }});
+     // Track last-focused list (initially activeList)
+        lastListFocused = activeList;
+        activeList.addFocusListener(new FocusAdapter() { @Override public void focusGained(FocusEvent e) { lastListFocused = activeList; }});
+        completedList.addFocusListener(new FocusAdapter() { @Override public void focusGained(FocusEvent e) { lastListFocused = completedList; }});
+
+        // Keyboard: Enter to edit, Space to toggle (for focused lists)
+        addCommonListBindings(activeList);
+        addCommonListBindings(completedList);
+
+        // Arrow-based focus navigation behaviors:
+        // - DOWN at end of activeList -> move into completedList (first item) or to first button
+        // - UP at start of completedList -> move into activeList (last item)
+        // - RIGHT from any list -> focus first button
+        addListFocusTraversalBehavior(activeList, completedList, addBtn);
+        addListFocusTraversalBehavior(completedList, activeList, addBtn);
+
+        // Buttons: left/right move between buttons; left from first button returns to lastListFocused
+        addButtonArrowNavigation(addBtn, toggleBtn);
+        addButtonArrowNavigation(toggleBtn, delBtn);
+        addButtonArrowNavigation(delBtn, xpLabel); // xpLabel non-focusable fallback
+
+        // Make LEFT from Add return to last focused list
+        addBtn.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "leftFromFirstButton");
+        addBtn.getActionMap().put("leftFromFirstButton", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                if (lastListFocused != null) transferFocusToList(lastListFocused);
+            }
+        });
         
         loadTasks();
 	}
 	
+	// Common bindings: Enter -> edit, Space -> toggle
+    private void addCommonListBindings(JList<Task> list) {
+        InputMap im = list.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap am = list.getActionMap();
+
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "edit");
+        am.put("edit", new AbstractAction() { public void actionPerformed(ActionEvent e) { onEdit(); }});
+
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "toggle");
+        am.put("toggle", new AbstractAction() { public void actionPerformed(ActionEvent e) { onToggle(); }});
+    }
+    
+    // Adds up/down/left/right traversal behavior for a list:
+    // otherList is the partner list (active<->completed), firstButton is the button to focus when moving to buttons
+    private void addListFocusTraversalBehavior(JList<Task> list, JList<Task> otherList, JButton firstButton) {
+        InputMap im = list.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap am = list.getActionMap();
+
+        // DOWN: if at last index move to other list (first item) or to first button
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "downOrMove");
+        am.put("downOrMove", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                int idx = list.getSelectedIndex();
+                int size = list.getModel().getSize();
+                if (size == 0) {
+                    if (otherList.getModel().getSize() > 0) {
+                        otherList.requestFocusInWindow();
+                        otherList.setSelectedIndex(0);
+                        otherList.ensureIndexIsVisible(0);
+                    } else {
+                        firstButton.requestFocusInWindow();
+                    }
+                    return;
+                }
+                if (idx < 0) {
+                    list.setSelectedIndex(0);
+                    list.ensureIndexIsVisible(0);
+                    return;
+                }
+                if (idx >= size - 1) {
+                    if (otherList.getModel().getSize() > 0) {
+                        otherList.requestFocusInWindow();
+                        otherList.setSelectedIndex(0);
+                        otherList.ensureIndexIsVisible(0);
+                    } else {
+                        firstButton.requestFocusInWindow();
+                    }
+                } else {
+                    list.setSelectedIndex(idx + 1);
+                    list.ensureIndexIsVisible(idx + 1);
+                }
+            }
+        });
+
+        // UP: if at first index move to other list's last
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "upOrMove");
+        am.put("upOrMove", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                int idx = list.getSelectedIndex();
+                int size = list.getModel().getSize();
+                if (size == 0) {
+                    if (otherList.getModel().getSize() > 0) {
+                        otherList.requestFocusInWindow();
+                        int li = otherList.getModel().getSize() - 1;
+                        otherList.setSelectedIndex(li);
+                        otherList.ensureIndexIsVisible(li);
+                    }
+                    return;
+                }
+                if (idx < 0) {
+                    int li = size - 1;
+                    list.setSelectedIndex(li);
+                    list.ensureIndexIsVisible(li);
+                    return;
+                }
+                if (idx == 0) {
+                    if (otherList.getModel().getSize() > 0) {
+                        otherList.requestFocusInWindow();
+                        int li = otherList.getModel().getSize() - 1;
+                        otherList.setSelectedIndex(li);
+                        otherList.ensureIndexIsVisible(li);
+                    }
+                } else {
+                    list.setSelectedIndex(idx - 1);
+                    list.ensureIndexIsVisible(idx - 1);
+                }
+            }
+        });
+
+        // RIGHT: move from list to first button
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "moveToButtons");
+        am.put("moveToButtons", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                firstButton.requestFocusInWindow();
+            }
+        });
+
+        // LEFT: move from list to otherList (if present), else to first button
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "moveToOtherList");
+        am.put("moveToOtherList", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                if (otherList.getModel().getSize() > 0) {
+                    otherList.requestFocusInWindow();
+                    otherList.setSelectedIndex(0);
+                    otherList.ensureIndexIsVisible(0);
+                } else {
+                    firstButton.requestFocusInWindow();
+                }
+            }
+        });
+    }
+    
+ // Configure left/right arrow navigation for buttons: left moves focus backward, right moves forward.
+    private void addButtonArrowNavigation(final JComponent button, final Component toRight) {
+        InputMap im = button.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap am = button.getActionMap();
+
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "moveRight");
+        am.put("moveRight", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                if (toRight != null) {
+                    toRight.requestFocusInWindow();
+                } else {
+                    button.transferFocus();
+                }
+            }
+        });
+
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "moveLeft");
+        am.put("moveLeft", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                // go back to the last focused list
+                if (lastListFocused != null) {
+                    transferFocusToList(lastListFocused);
+                } else {
+                    button.transferFocusBackward();
+                }
+            }
+        });
+    }
+    
+    private void transferFocusToList(JList<? extends Task> list) {
+        if (list == null) return;
+        list.requestFocusInWindow();
+        int size = list.getModel().getSize();
+        if (size > 0) {
+            int sel = list.getSelectedIndex();
+            if (sel < 0) sel = 0;
+            if (sel >= size) sel = size - 1;
+            list.setSelectedIndex(sel);
+            list.ensureIndexIsVisible(sel);
+        }
+    }
+	
 	private void onAdd() {
-        String title = JOptionPane.showInputDialog(this, "Task title:");
+		String title = JOptionPane.showInputDialog(this, "Task title:");
         if (title != null && !title.trim().isEmpty()) {
             Task t = new Task(UUID.randomUUID().toString(), title.trim(), false);
             activeModel.addElement(t);
             saveTasksAsync();
+
+            // Select the newly added task and return focus to the active list.
+            int newIndex = activeModel.getSize() - 1;
+            if (newIndex >= 0) {
+                activeList.setSelectedIndex(newIndex);
+                activeList.ensureIndexIsVisible(newIndex);
+                activeList.requestFocusInWindow();
+                lastListFocused = activeList;
+            }
+        } else {
+            // If the user cancelled the Add dialog, restore focus to the last-focused list.
+            if (lastListFocused != null) transferFocusToList(lastListFocused);
         }
     }
 	
