@@ -4,13 +4,24 @@ import com.questify.ui.*;
 import com.questify.store.*;
 import com.questify.util.ConfigStore;
 
-import java.nio.file.*;
-
+import java.awt.Dimension;
+import java.awt.Font;
+import java.util.Enumeration;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.plaf.FontUIResource;
+import java.nio.file.*;
 
 public class Main {
 
+	
+	public static final Dimension PHONE_SIZE_SMALL = new Dimension(480, 900);
+    public static final Dimension PHONE_SIZE_HIRES = new Dimension(1080, 1920);
+	
 	public static void main(String[] args) {
+		
+		setGlobalFont(new Font("SansSerif", Font.PLAIN, 16));
+		
 		Path appDir = Paths.get(System.getProperty("user.home"), ".questify");
 		Path dataFile = appDir.resolve("tasks.txt");
 		Path cfgFile = appDir.resolve("config.properties");
@@ -31,10 +42,21 @@ public class Main {
 				}
 			}
 			
-			MainView main = new MainView(store);
+			MainView main = new MainView(store, PHONE_SIZE_SMALL);
 			main.setVisible(true);
 		});
 
 	}
+	
+	private static void setGlobalFont(Font font) {
+        FontUIResource fr = new FontUIResource(font);
+        for (Enumeration<Object> keys = UIManager.getDefaults().keys(); keys.hasMoreElements();) {
+            Object key = keys.nextElement();
+            Object value = UIManager.get(key);
+            if (value instanceof FontUIResource) {
+                UIManager.put(key, fr);
+            }
+        }
+    }
 
 }
