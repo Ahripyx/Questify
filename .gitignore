@@ -1,0 +1,35 @@
+# Java class files
+*.class
+
+# Build folders
+/bin/
+out/
+build/
+target/
+
+# Eclipse metadata (workspace-specific)
+.settings/
+
+# Optionally include .project and .classpath or leave them out
+# Keep them if you want others to import easily; uncomment to ignore:
+# .project
+# .classpath
+
+# IDE folders
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+*.log
+*.tmp
+
+# User-specific swap files
+*~ 
+*.swp
+
+# Gradle/Maven caches (if present)
+.gradle/
