@@ -31,7 +31,7 @@ public class Main {
 		
 		// Show splash, then privacy, then main UI on EDT
 		SwingUtilities.invokeLater(() -> {
-			SplashScreen splash = new SplashScreen();
+			SplashScreen splash = new SplashScreen(3000, Main.PHONE_SIZE_SMALL);
 			splash.showAndWait();
 			
 			if (!cfg.isPrivacyAccepted()) {

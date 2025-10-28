@@ -2,51 +2,87 @@ package com.questify.ui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.ExecutionException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 
 public class SplashScreen {
-	private final JWindow window;
-	private final JProgressBar bar;
+	private final JDialog dialog;
+    private final JProgressBar bar;
 	
-	public SplashScreen() {
-		window = new JWindow();
+	private final int minDisplayMs;
+	
+	
+	public SplashScreen(int minDisplayMs, Dimension size) {
+		this.minDisplayMs = minDisplayMs;
+		
+		dialog = new JDialog((Frame) null, true);
+        dialog.setUndecorated(true); 
+        
 		JPanel p = new JPanel(new BorderLayout());
-		p.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+		p.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
+		p.setBackground(Color.WHITE);
+		
 		JLabel label = new JLabel("Questify", JLabel.CENTER);
-		label.setFont(label.getFont().deriveFont(26f).deriveFont(Font.BOLD));
+		label.setFont(label.getFont().deriveFont(28f).deriveFont(Font.BOLD));
+		label.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
 		p.add(label, BorderLayout.CENTER);
+		
 		bar = new JProgressBar(0,100);
 		bar.setStringPainted(true);
+		bar.setBorder(BorderFactory.createEmptyBorder(10, 12, 12, 12));
 		p.add(bar, BorderLayout.SOUTH);
-		window.getContentPane().add(p);
-		window.setSize(420,160);
-		window.setLocationRelativeTo(null);
+		
+		dialog.getContentPane().add(p);
+		 if (size == null) {
+	            dialog.setSize(420, 160);
+	        } else {
+	            // Use the provided size for the splash content area
+	            // If you want the splash to exactly match MainView's content area, pass the same Dimension used for MainView.
+	            dialog.setSize(size);
+	        }
+	        dialog.setLocationRelativeTo(null);
 	}
 	
 	public void showAndWait() {
-        window.setVisible(true);
         SwingWorker<Void, Integer> worker = new SwingWorker<>() {
             @Override
             protected Void doInBackground() throws Exception {
-                for (int i = 0; i <= 100; i += 10) {
-                    Thread.sleep(70);
-                    publish(i);
+            	long start = System.currentTimeMillis();
+            	
+            	final int steps = 60;
+            	final long sleep = Math.max(1, minDisplayMs / steps);
+            	for (int i = 0; i <= steps; i++) {
+                    long elapsed = System.currentTimeMillis() - start;
+                    int progress = (int) Math.min(100, (elapsed * 100.0) / Math.max(1, minDisplayMs));
+                    publish(progress);
+                    if (elapsed >= minDisplayMs) break;
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(sleep);
+                    } catch (InterruptedException ex) {
+                        // restore interrupted status and break
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
                 }
+            	publish(100);
                 return null;
             }
 
             @Override
-            protected void process(java.util.List<Integer> chunks) {
-                bar.setValue(chunks.get(chunks.size()-1));
+            protected void process(List<Integer> chunks) {
+                int last = chunks.get(chunks.size() - 1);
+                bar.setValue(last);
             }
 
             @Override
             protected void done() {
-                window.setVisible(false);
-                window.dispose();
+                // dispose the dialog (this runs on EDT)
+                dialog.setVisible(false);
+                dialog.dispose();
             }
         };
         worker.execute();
-        try { worker.get(); } catch (InterruptedException|ExecutionException e) { /* ignore */ }
+        dialog.setVisible(true);
     }
 }
