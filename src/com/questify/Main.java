@@ -39,7 +39,7 @@ public class Main {
 			SplashScreen splash = new SplashScreen(3000, Main.PHONE_SIZE_SMALL);
 			splash.showAndWait();
 			
-			if (ALWAYS_SHOW_PRIVACY_FOR_TESTING || !cfg.isPrivacyAccepted()) {
+			if (!cfg.isPrivacyAccepted()) {
 				PrivacyDialog pd = new PrivacyDialog(cfg, Main.PHONE_SIZE_SMALL);
 				boolean ok = pd.showModal(null);
 				if (!ok) {
