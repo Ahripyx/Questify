@@ -37,8 +37,7 @@ public class SplashScreen {
 		 if (size == null) {
 	            dialog.setSize(420, 160);
 	        } else {
-	            // Use the provided size for the splash content area
-	            // If you want the splash to exactly match MainView's content area, pass the same Dimension used for MainView.
+	 
 	            dialog.setSize(size);
 	        }
 	        dialog.setLocationRelativeTo(null);
@@ -77,7 +76,7 @@ public class SplashScreen {
 
             @Override
             protected void done() {
-                // dispose the dialog (this runs on EDT)
+                // dispose the dialog
                 dialog.setVisible(false);
                 dialog.dispose();
             }

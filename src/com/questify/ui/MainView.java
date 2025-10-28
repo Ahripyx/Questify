@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class MainView extends JFrame {
-	private DefaultListModel<Task> listModel;
-	private JList<Task> taskList;
+	private DefaultListModel<Task> activeModel;
+	private DefaultListModel<Task> completedModel;
+    private JList<Task> activeList;
+    private JList<Task> completedList;
 	private final TaskStore store;
 	private JLabel xpLabel;
 	private int xp = 0;
@@ -32,16 +34,30 @@ public class MainView extends JFrame {
     }
 	
 	private void initUI() {
-		listModel = new DefaultListModel<>();
-		taskList = new JList<>(listModel);
-		taskList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		taskList.setFont(taskList.getFont().deriveFont(16f));
-		taskList.setCellRenderer(new TaskCellRenderer());
+		activeModel = new DefaultListModel<>();
+		completedModel = new DefaultListModel<>();
 		
+		activeList = new JList<>(activeModel);
+        completedList = new JList<>(completedModel);
+        
+        activeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        completedList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        activeList.setFont(activeList.getFont().deriveFont(16f));
+        completedList.setFont(completedList.getFont().deriveFont(16f));
+        
+        TaskCellRenderer renderer = new TaskCellRenderer();
+        activeList.setCellRenderer(renderer);
+        completedList.setCellRenderer(renderer);
+        
+        JScrollPane activeScroll = new JScrollPane(activeList);
+        JScrollPane completedScroll = new JScrollPane(completedList);
+        activeScroll.setBorder(BorderFactory.createTitledBorder("Active Tasks"));
+        completedScroll.setBorder(BorderFactory.createTitledBorder("Completed Tasks"));
 		
-		JScrollPane sp = new JScrollPane(taskList);
-		sp.setBorder(BorderFactory.createEmptyBorder());
-        sp.getVerticalScrollBar().setUnitIncrement(16);
+        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, activeScroll, completedScroll);
+        split.setResizeWeight(0.5);
+        split.setOneTouchExpandable(true);
         
 		JButton addBtn = new JButton("Add");
 		addBtn.setMnemonic(KeyEvent.VK_N);
@@ -54,23 +70,26 @@ public class MainView extends JFrame {
         int avail = Math.max(240, phoneSize.width - padding - (gap * (cols - 1)));
         int btnW = Math.max(120, avail / cols);
 		
-		JPanel buttonBar = new JPanel(new GridLayout(1, 4, 6, 0));
-		addBtn.setPreferredSize(new Dimension(btnW, 48));
+        addBtn.setPreferredSize(new Dimension(btnW, 48));
         toggleBtn.setPreferredSize(new Dimension(btnW, 48));
         delBtn.setPreferredSize(new Dimension(btnW, 48));
+        xpLabel = new JLabel("XP: 0");
+        xpLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        xpLabel.setPreferredSize(new Dimension(100, 48));
 		
 		xpLabel = new JLabel("XP: 0");
 		xpLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		xpLabel.setPreferredSize(new Dimension(100, 48));
 		
-		buttonBar.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+		JPanel buttonBar = new JPanel(new GridLayout(1, 4, 6, 0));
+        buttonBar.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         buttonBar.add(addBtn);
         buttonBar.add(toggleBtn);
         buttonBar.add(delBtn);
         buttonBar.add(xpLabel);
 		
         getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(sp, BorderLayout.CENTER);
+        getContentPane().add(split, BorderLayout.CENTER);
         getContentPane().add(buttonBar, BorderLayout.SOUTH);
         
         addBtn.addActionListener(e -> onAdd());
@@ -78,19 +97,25 @@ public class MainView extends JFrame {
         toggleBtn.addActionListener(e -> onToggle());
         
         // keyboard delete
-        taskList.getInputMap(JComponent.WHEN_FOCUSED)
-        	.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
-        taskList.getActionMap().put("delete", new AbstractAction() {
-        	public void actionPerformed(ActionEvent e) { onDelete(); }
-        });
-        
-        // double click to edit
-        taskList.addMouseListener(new MouseAdapter() {
+        activeList.getInputMap(JComponent.WHEN_FOCUSED)
+        .put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteActive");
+	    activeList.getActionMap().put("deleteActive", new AbstractAction() {
+	        public void actionPerformed(ActionEvent e) { onDelete(); }
+	    });
+	    
+	    completedList.getInputMap(JComponent.WHEN_FOCUSED)
+        .put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteCompleted");
+	    completedList.getActionMap().put("deleteCompleted", new AbstractAction() {
+	        public void actionPerformed(ActionEvent e) { onDelete(); }
+	    });
+	    
+	    MouseAdapter editOnDouble = new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) onEdit();
             }
-        });
-        
+        };
+        activeList.addMouseListener(editOnDouble);
+        completedList.addMouseListener(editOnDouble);
         
         loadTasks();
 	}
@@ -99,43 +124,70 @@ public class MainView extends JFrame {
         String title = JOptionPane.showInputDialog(this, "Task title:");
         if (title != null && !title.trim().isEmpty()) {
             Task t = new Task(UUID.randomUUID().toString(), title.trim(), false);
-            listModel.addElement(t);
+            activeModel.addElement(t);
             saveTasksAsync();
         }
     }
 	
 	private void onDelete() {
-        int idx = taskList.getSelectedIndex();
-        if (idx >= 0) {
-            listModel.remove(idx);
+        if (activeList.getSelectedIndex() >= 0) {
+            activeModel.remove(activeList.getSelectedIndex());
+            saveTasksAsync();
+            return;
+        }
+        if (completedList.getSelectedIndex() >= 0) {
+            completedModel.remove(completedList.getSelectedIndex());
             saveTasksAsync();
         }
     }
 	
 	private void onToggle() {
-        int idx = taskList.getSelectedIndex();
-        if (idx >= 0) {
-            Task t = listModel.get(idx);
-            boolean nowDone = !t.isDone();
-            t.setDone(nowDone);
-            listModel.set(idx, t); // refresh
-            if (nowDone) addXp(10);
+        // If an active task selected -> mark done, move to completed and award XP
+        int aidx = activeList.getSelectedIndex();
+        if (aidx >= 0) {
+            Task t = activeModel.get(aidx);
+            t.setDone(true);
+            activeModel.remove(aidx);
+            completedModel.addElement(t);
+            addXp(10);
+            saveTasksAsync();
+            return;
+        }
+        // If a completed task selected -> mark undone, move to active
+        int cidx = completedList.getSelectedIndex();
+        if (cidx >= 0) {
+            Task t = completedModel.get(cidx);
+            t.setDone(false);
+            completedModel.remove(cidx);
+            activeModel.addElement(t);
             saveTasksAsync();
         }
     }
 	
 	private void onEdit() {
-        int idx = taskList.getSelectedIndex();
-        if (idx >= 0) {
-            Task t = listModel.get(idx);
+        if (activeList.getSelectedIndex() >= 0) {
+            int idx = activeList.getSelectedIndex();
+            Task t = activeModel.get(idx);
             String s = JOptionPane.showInputDialog(this, "Edit task title:", t.getTitle());
             if (s != null && !s.trim().isEmpty()) {
                 t.setTitle(s.trim());
-                listModel.set(idx, t);
+                activeModel.set(idx, t);
+                saveTasksAsync();
+            }
+            return;
+        }
+        if (completedList.getSelectedIndex() >= 0) {
+            int idx = completedList.getSelectedIndex();
+            Task t = completedModel.get(idx);
+            String s = JOptionPane.showInputDialog(this, "Edit task title:", t.getTitle());
+            if (s != null && !s.trim().isEmpty()) {
+                t.setTitle(s.trim());
+                completedModel.set(idx, t);
                 saveTasksAsync();
             }
         }
     }
+
 	
 	private void addXp(int amount) {
         xp += amount;
@@ -152,8 +204,13 @@ public class MainView extends JFrame {
             protected void done() {
                 try {
                     List<Task> tasks = get();
-                    listModel.clear();
-                    tasks.forEach(listModel::addElement);
+                    activeModel.clear();
+                    completedModel.clear();
+                    // preserve order: add active first then completed
+                    for (Task t : tasks) {
+                        if (t.isDone()) completedModel.addElement(t);
+                        else activeModel.addElement(t);
+                    }
                 } catch (Exception e) { e.printStackTrace(); }
             }
         };
@@ -162,7 +219,8 @@ public class MainView extends JFrame {
 	
 	private List<Task> getAllTasksFromModel() {
         List<Task> out = new ArrayList<>();
-        for (int i = 0; i < listModel.getSize(); i++) out.add(listModel.get(i));
+        for (int i = 0; i < activeModel.getSize(); i++) out.add(activeModel.get(i));
+        for (int i = 0; i < completedModel.getSize(); i++) out.add(completedModel.get(i));
         return out;
     }
 	
@@ -185,7 +243,7 @@ public class MainView extends JFrame {
         TaskCellRenderer() {
             label.setOpaque(false);
             label.setFont(label.getFont().deriveFont(Font.BOLD, 16f));
-            panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12)); // padding like mobile
+            panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
             panel.add(label, BorderLayout.CENTER);
         }
 
@@ -193,7 +251,6 @@ public class MainView extends JFrame {
         public Component getListCellRendererComponent(JList<? extends Task> list, Task value, int index, boolean isSelected, boolean cellHasFocus) {
             String title = value.getTitle();
             if (value.isDone()) {
-                // simple strike-through via HTML
                 label.setText("<html><span style='color:gray;'><s>" + escapeHtml(title) + "</s></span></html>");
             } else {
                 label.setText("<html>" + escapeHtml(title) + "</html>");
