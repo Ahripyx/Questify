@@ -2,6 +2,7 @@ package com.questify.ui;
 
 import com.questify.model.Task;
 import com.questify.store.TaskStore;
+import com.questify.util.ConfigStore;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,17 +17,23 @@ public class MainView extends JFrame {
     private JList<Task> activeList;
     private JList<Task> completedList;
 	private final TaskStore store;
+	private final ConfigStore cfg;
 	private JLabel xpLabel;
 	private int xp = 0;
 	private final Dimension phoneSize;
 	
-	public MainView(TaskStore store, Dimension phoneSize) {
+	public MainView(TaskStore store, Dimension phoneSize, ConfigStore cfg) {
         super("Questify");
         this.store = store;
         this.phoneSize = phoneSize;
+        this.cfg = cfg;
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         
         initUI();
+        
+        xp = cfg.getXp();
+        if (xpLabel != null) xpLabel.setText("XP: " + xp);
+        
         getContentPane().setPreferredSize(phoneSize);
         pack();
         setResizable(false);
@@ -193,11 +200,21 @@ public class MainView extends JFrame {
 	private void addXp(int amount) {
         xp += amount;
         xpLabel.setText("XP: " + xp);
+        try {
+            cfg.setXp(xp);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 	
 	private void removeXp(int amount) {
 		xp -= amount;
 		xpLabel.setText("XP: " + xp);
+		try {
+            cfg.setXp(xp);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 	
 	private void loadTasks() {

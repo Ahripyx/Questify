@@ -22,6 +22,22 @@ public class ConfigStore {
 		save(p);
 	}
 	
+	public int getXp() {
+		Properties p = load();
+		String s = p.getProperty("xp", "0");
+		try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+	}
+	
+	public void setXp(int xp) {
+        Properties p = load();
+        p.setProperty("xp", Integer.toString(xp));
+        save(p);
+    }
+	
 	private Properties load() {
 		Properties p = new Properties();
 		if (Files.exists(cfgFile)) {

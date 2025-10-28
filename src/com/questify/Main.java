@@ -44,7 +44,7 @@ public class Main {
 				}
 			}
 			
-			MainView main = new MainView(store, PHONE_SIZE_SMALL);
+			MainView main = new MainView(store, PHONE_SIZE_SMALL, cfg);
 			main.setVisible(true);
 		});
 
