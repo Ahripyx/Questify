@@ -8,9 +8,11 @@ import java.awt.*;
 public class PrivacyDialog {
 	private final ConfigStore cfg;
 	private boolean accepted = false;
+	private final Dimension size;
 	
-	public PrivacyDialog(ConfigStore cfg) {
+	public PrivacyDialog(ConfigStore cfg, Dimension size) {
 		this.cfg = cfg;
+		this.size = size;
 	}
 	
 	public boolean showModal(Component parent) {
@@ -22,7 +24,7 @@ public class PrivacyDialog {
 		ta.setFont(ta.getFont().deriveFont(14f));
 		
 		JScrollPane sp = new JScrollPane(ta);
-		sp.setPreferredSize(new Dimension(520,320));
+		sp.setPreferredSize(new Dimension(size));
 		
 		JButton accept = new JButton("Accept");
 		JButton decline = new JButton("Decline");

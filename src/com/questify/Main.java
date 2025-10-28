@@ -17,6 +17,8 @@ public class Main {
 	
 	public static final Dimension PHONE_SIZE_SMALL = new Dimension(480, 900);
     public static final Dimension PHONE_SIZE_HIRES = new Dimension(1080, 1920);
+    
+    public static final boolean ALWAYS_SHOW_PRIVACY_FOR_TESTING = true;
 	
 	public static void main(String[] args) {
 		
@@ -34,8 +36,8 @@ public class Main {
 			SplashScreen splash = new SplashScreen(3000, Main.PHONE_SIZE_SMALL);
 			splash.showAndWait();
 			
-			if (!cfg.isPrivacyAccepted()) {
-				PrivacyDialog pd = new PrivacyDialog(cfg);
+			if (ALWAYS_SHOW_PRIVACY_FOR_TESTING || !cfg.isPrivacyAccepted()) {
+				PrivacyDialog pd = new PrivacyDialog(cfg, Main.PHONE_SIZE_SMALL);
 				boolean ok = pd.showModal(null);
 				if (!ok) {
 					System.exit(0);
