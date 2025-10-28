@@ -7,7 +7,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-
+// Minimal splash screen with progress bar and optional icon.
 public class SplashScreen {
 	private final JDialog dialog;
     private final JProgressBar bar;
@@ -35,11 +35,9 @@ public class SplashScreen {
         JLabel iconLabel = new JLabel();
         ImageIcon icon = loadAndScaleIcon("/resources/questify.png", ICON_SIZE, ICON_SIZE);
         if (icon == null) {
-            // try alternate classpath location
             icon = loadAndScaleIcon("/com/questify/ui/resources/questify.png", ICON_SIZE, ICON_SIZE);
         }
         if (icon == null) {
-            // try filesystem fallback (project-root/resources/questify.png)
             icon = loadAndScaleIconFromFile("resources/questify.png", ICON_SIZE, ICON_SIZE);
         }
         if (icon != null) {
@@ -82,6 +80,7 @@ public class SplashScreen {
 	        dialog.setLocationRelativeTo(null);
 	}
 	
+	// Show splash and wait at least the given minimum time.
 	public void showAndWait() {
         SwingWorker<Void, Integer> worker = new SwingWorker<>() {
             @Override
@@ -98,7 +97,6 @@ public class SplashScreen {
                     try {
                         TimeUnit.MILLISECONDS.sleep(sleep);
                     } catch (InterruptedException ex) {
-                        // restore interrupted status and break
                         Thread.currentThread().interrupt();
                         break;
                     }
@@ -115,7 +113,6 @@ public class SplashScreen {
 
             @Override
             protected void done() {
-                // dispose the dialog
                 dialog.setVisible(false);
                 dialog.dispose();
             }
@@ -124,7 +121,7 @@ public class SplashScreen {
         dialog.setVisible(true);
     }
 	
-    // Try to load an icon from the classpath resource (resourcePath). Return null if not found.
+	// Load icon from classpath and scale it.
     private ImageIcon loadAndScaleIcon(String resourcePath, int w, int h) {
         try {
             URL u = getClass().getResource(resourcePath);
@@ -137,7 +134,7 @@ public class SplashScreen {
         }
     }
 
-    // Try to load an icon from the filesystem (relative to working dir). Return null if not found.
+    // Load icon from filesystem and scale it.
     private ImageIcon loadAndScaleIconFromFile(String filePath, int w, int h) {
         try {
             File f = new File(filePath);

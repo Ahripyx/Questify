@@ -7,6 +7,7 @@ import java.util.*;
 import java.io.*;
 import java.util.stream.Collectors;
 
+// File-based TaskStore using a simple line format with a custom seperator.
 public class TextFileTaskStore implements TaskStore { 
 	private final Path file;
 	
@@ -23,7 +24,7 @@ public class TextFileTaskStore implements TaskStore {
 		
 		for (String line : lines) {
 			
-			// CSV-like: id,,title,,done (use ||SEP|| to avoid comma issues)
+			// Line format: id||SEP||title||SEP||done
             String[] parts = line.split("\\|\\|SEP\\|\\|", 3);
             if (parts.length >= 3) {
             	String id = parts[0];

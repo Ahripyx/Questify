@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.List;
 import java.util.UUID;
 
+// Main application window with two lists and a simple button bar.
 public class MainView extends JFrame {
 	private DefaultListModel<Task> activeModel;
 	private DefaultListModel<Task> completedModel;
@@ -42,6 +43,7 @@ public class MainView extends JFrame {
         setLocationRelativeTo(null);
     }
 	
+	// Build UI components and wire interactions.
 	private void initUI() {
 		activeModel = new DefaultListModel<>();
 		completedModel = new DefaultListModel<>();
@@ -74,7 +76,7 @@ public class MainView extends JFrame {
 		JButton toggleBtn = new JButton("Toggle");
 		
 		int gap = 8;
-        int cols = 3; // 3 main buttons
+        int cols = 3; // number of main buttons
         int padding = 32; // left+right padding inside buttonBar
         int avail = Math.max(240, phoneSize.width - padding - (gap * (cols - 1)));
         int btnW = Math.max(120, avail / cols);
@@ -105,7 +107,7 @@ public class MainView extends JFrame {
         delBtn.addActionListener(e -> onDelete());
         toggleBtn.addActionListener(e -> onToggle());
         
-        // keyboard delete
+        // Delete key binding for lists.
         activeList.getInputMap(JComponent.WHEN_FOCUSED)
         .put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteActive");
 	    activeList.getActionMap().put("deleteActive", new AbstractAction() {
@@ -126,20 +128,18 @@ public class MainView extends JFrame {
         activeList.addMouseListener(editOnDouble);
         completedList.addMouseListener(editOnDouble);
         
-        //WCAG related stuff
+        // Accessibility info.
         activeList.getAccessibleContext().setAccessibleName("Active Tasks List");
         activeList.getAccessibleContext().setAccessibleDescription("List of active tasks. Use arrow keys to navigate, Enter to edit, Delete to remove, Space to toggle completion.");
         
         completedList.getAccessibleContext().setAccessibleName("Completed Tasks List");
         completedList.getAccessibleContext().setAccessibleDescription("List of completed tasks. Use arrow keys to navigate, Enter to edit, Delete to remove, Space to toggle completion.");
         
-        // Expose scroll panes to accessibility
         activeScroll.getAccessibleContext().setAccessibleName("Active Tasks");
         activeScroll.getAccessibleContext().setAccessibleDescription("Contains the active tasks list");
         completedScroll.getAccessibleContext().setAccessibleName("Completed Tasks");
         completedScroll.getAccessibleContext().setAccessibleDescription("Contains the completed tasks list");
         
-        // Buttons: accessible name, description and tooltip
         addBtn.setToolTipText("Add a new task (Alt+N)");
         addBtn.getAccessibleContext().setAccessibleName("Add task");
         addBtn.getAccessibleContext().setAccessibleDescription("Create a new task. Shortcut: Alt+N");
@@ -152,33 +152,29 @@ public class MainView extends JFrame {
         toggleBtn.getAccessibleContext().setAccessibleName("Toggle task");
         toggleBtn.getAccessibleContext().setAccessibleDescription("Mark selected task complete or incomplete");
         
-        // XP label accessible
         xpLabel.getAccessibleContext().setAccessibleName("Experience points");
         xpLabel.getAccessibleContext().setAccessibleDescription("Your earned experience points");
         xpLabel.setFocusable(false);
         
-     // Track last-focused list (initially activeList)
+        // Track last-focused list for navigation.
         lastListFocused = activeList;
         activeList.addFocusListener(new FocusAdapter() { @Override public void focusGained(FocusEvent e) { lastListFocused = activeList; }});
         completedList.addFocusListener(new FocusAdapter() { @Override public void focusGained(FocusEvent e) { lastListFocused = completedList; }});
 
-        // Keyboard: Enter to edit, Space to toggle (for focused lists)
+        // Common list key bindings.
         addCommonListBindings(activeList);
         addCommonListBindings(completedList);
 
-        // Arrow-based focus navigation behaviors:
-        // - DOWN at end of activeList -> move into completedList (first item) or to first button
-        // - UP at start of completedList -> move into activeList (last item)
-        // - RIGHT from any list -> focus first button
+        // Common list key bindings.
         addListFocusTraversalBehavior(activeList, completedList, addBtn);
         addListFocusTraversalBehavior(completedList, activeList, addBtn);
 
-        // Buttons: left/right move between buttons; left from first button returns to lastListFocused
+        // Custom focus traversal behavior.
         addButtonArrowNavigation(addBtn, toggleBtn);
         addButtonArrowNavigation(toggleBtn, delBtn);
-        addButtonArrowNavigation(delBtn, xpLabel); // xpLabel non-focusable fallback
+        addButtonArrowNavigation(delBtn, xpLabel); // xpLabel is non-focusable but used as fallback.
 
-        // Make LEFT from Add return to last focused list
+        // Left from the first button returns to the last list.
         addBtn.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "leftFromFirstButton");
         addBtn.getActionMap().put("leftFromFirstButton", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
@@ -189,7 +185,7 @@ public class MainView extends JFrame {
         loadTasks();
 	}
 	
-	// Common bindings: Enter -> edit, Space -> toggle
+	// Enter to edit, Space to toggle for a list.
     private void addCommonListBindings(JList<Task> list) {
         InputMap im = list.getInputMap(JComponent.WHEN_FOCUSED);
         ActionMap am = list.getActionMap();
@@ -201,13 +197,11 @@ public class MainView extends JFrame {
         am.put("toggle", new AbstractAction() { public void actionPerformed(ActionEvent e) { onToggle(); }});
     }
     
-    // Adds up/down/left/right traversal behavior for a list:
-    // otherList is the partner list (active<->completed), firstButton is the button to focus when moving to buttons
+    // Configure up/down/left/right behavior for list navigation.
     private void addListFocusTraversalBehavior(JList<Task> list, JList<Task> otherList, JButton firstButton) {
         InputMap im = list.getInputMap(JComponent.WHEN_FOCUSED);
         ActionMap am = list.getActionMap();
 
-        // DOWN: if at last index move to other list (first item) or to first button
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "downOrMove");
         am.put("downOrMove", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
@@ -243,7 +237,6 @@ public class MainView extends JFrame {
             }
         });
 
-        // UP: if at first index move to other list's last
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "upOrMove");
         am.put("upOrMove", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
@@ -278,7 +271,6 @@ public class MainView extends JFrame {
             }
         });
 
-        // RIGHT: move from list to first button
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "moveToButtons");
         am.put("moveToButtons", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
@@ -286,7 +278,6 @@ public class MainView extends JFrame {
             }
         });
 
-        // LEFT: move from list to otherList (if present), else to first button
         im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "moveToOtherList");
         am.put("moveToOtherList", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
@@ -301,7 +292,7 @@ public class MainView extends JFrame {
         });
     }
     
- // Configure left/right arrow navigation for buttons: left moves focus backward, right moves forward.
+    // Left/right arrow navigation for buttons.
     private void addButtonArrowNavigation(final JComponent button, final Component toRight) {
         InputMap im = button.getInputMap(JComponent.WHEN_FOCUSED);
         ActionMap am = button.getActionMap();
@@ -330,6 +321,7 @@ public class MainView extends JFrame {
         });
     }
     
+    // Move keyboard focus to given list and ensure selection is valid.
     private void transferFocusToList(JList<? extends Task> list) {
         if (list == null) return;
         list.requestFocusInWindow();
@@ -343,6 +335,7 @@ public class MainView extends JFrame {
         }
     }
 	
+    // Add a new task from user input.
     private void onAdd() {
 		String title = JOptionPane.showInputDialog(this, "Task title:");
         if (title != null && !title.trim().isEmpty()) {
@@ -364,7 +357,8 @@ public class MainView extends JFrame {
             if (lastListFocused != null) transferFocusToList(lastListFocused);
         }
     }
-	
+    
+    // Delete selected task.
 	private void onDelete() {
         if (activeList.getSelectedIndex() >= 0) {
             activeModel.remove(activeList.getSelectedIndex());
@@ -377,8 +371,8 @@ public class MainView extends JFrame {
         }
     }
 	
+	// Toggle task completion and adjust XP.
 	private void onToggle() {
-        // If an active task selected -> mark done, move to completed and award XP
         int aidx = activeList.getSelectedIndex();
         if (aidx >= 0) {
             Task t = activeModel.get(aidx);
@@ -389,7 +383,6 @@ public class MainView extends JFrame {
             saveTasksAsync();
             return;
         }
-        // If a completed task selected -> mark undone, move to active
         int cidx = completedList.getSelectedIndex();
         if (cidx >= 0) {
             Task t = completedModel.get(cidx);
@@ -401,6 +394,7 @@ public class MainView extends JFrame {
         }
     }
 	
+	// Edit selected task title.
 	private void onEdit() {
         if (activeList.getSelectedIndex() >= 0) {
             int idx = activeList.getSelectedIndex();
@@ -427,7 +421,7 @@ public class MainView extends JFrame {
         }
     }
 
-	
+	// Increase XP and persist.
 	private void addXp(int amount) {
         xp += amount;
         xpLabel.setText("XP: " + xp);
@@ -438,6 +432,7 @@ public class MainView extends JFrame {
         }
     }
 	
+	// Decrease XP and persist.
 	private void removeXp(int amount) {
 		xp -= amount;
 		xpLabel.setText("XP: " + xp);
@@ -448,6 +443,8 @@ public class MainView extends JFrame {
         }
 	}
 	
+	
+	// Load tasks from the TaskStore on a background thread.
 	private void loadTasks() {
         SwingWorker<List<Task>,Void> w = new SwingWorker<>() {
             @Override
@@ -460,7 +457,6 @@ public class MainView extends JFrame {
                     List<Task> tasks = get();
                     activeModel.clear();
                     completedModel.clear();
-                    // preserve order: add active first then completed
                     for (Task t : tasks) {
                         if (t.isDone()) completedModel.addElement(t);
                         else activeModel.addElement(t);
@@ -478,6 +474,7 @@ public class MainView extends JFrame {
         return out;
     }
 	
+	// Merge active then completed into a single list for saving.
 	private void saveTasksAsync() {
         List<Task> tasks = getAllTasksFromModel();
         SwingWorker<Void,Void> w = new SwingWorker<>() {
@@ -490,6 +487,7 @@ public class MainView extends JFrame {
         w.execute();
     }
 	
+	// Normalize a title: trim, lowercase, then capitalize first char.
 	private String formatTitle(String s) {
         if (s == null) return "";
         String trimmed = s.trim();
@@ -498,6 +496,7 @@ public class MainView extends JFrame {
         return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 	
+	// Renderer for tasks with simple styling and safe HTML escaping.
 	private class TaskCellRenderer implements ListCellRenderer<Task> {
         private final JPanel panel = new JPanel(new BorderLayout());
         private final JLabel label = new JLabel();
@@ -526,7 +525,6 @@ public class MainView extends JFrame {
             return panel;
         }
 
-        // minimal HTML-escape for safety
         private String escapeHtml(String s) {
             return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
         }

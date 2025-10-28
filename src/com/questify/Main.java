@@ -12,16 +12,19 @@ import javax.swing.UIManager;
 import javax.swing.plaf.FontUIResource;
 import java.nio.file.*;
 
+// App entry point and startup orchestration.
 public class Main {
 
-	
+	// Common UI sizes
 	public static final Dimension PHONE_SIZE_SMALL = new Dimension(480, 900);
     public static final Dimension PHONE_SIZE_HIRES = new Dimension(1080, 1920);
     
+    // Force privacy dialog for testing when true.
     public static final boolean ALWAYS_SHOW_PRIVACY_FOR_TESTING = true;
 	
 	public static void main(String[] args) {
 		
+		// Set a consistent global font for Swing UI
 		setGlobalFont(new Font("SansSerif", Font.PLAIN, 16));
 		
 		Path appDir = Paths.get(System.getProperty("user.home"), ".questify");
@@ -31,7 +34,7 @@ public class Main {
 		ConfigStore cfg = new ConfigStore(cfgFile);
 		TextFileTaskStore store = new TextFileTaskStore(dataFile);
 		
-		// Show splash, then privacy, then main UI on EDT
+		// Run UI flow on the Event Dispatch Thread.
 		SwingUtilities.invokeLater(() -> {
 			SplashScreen splash = new SplashScreen(3000, Main.PHONE_SIZE_SMALL);
 			splash.showAndWait();
@@ -50,6 +53,7 @@ public class Main {
 
 	}
 	
+	// Apply a single font to all UIManager font defaults.
 	private static void setGlobalFont(Font font) {
         FontUIResource fr = new FontUIResource(font);
         for (Enumeration<Object> keys = UIManager.getDefaults().keys(); keys.hasMoreElements();) {

@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.KeyEvent;
 
+// Modal privacy policy dialog that persists acceptance state.
 public class PrivacyDialog {
 	private final ConfigStore cfg;
 	private boolean accepted = false;
@@ -17,6 +18,7 @@ public class PrivacyDialog {
 		this.size = size;
 	}
 	
+	// Show modal dialog and return true if user accepted.
 	public boolean showModal(Component parent) {
 		JLabel title = new JLabel("Privacy Policy", JLabel.CENTER);
 		title.setFont(title.getFont().deriveFont(Font.BOLD, 24f));
@@ -57,10 +59,8 @@ public class PrivacyDialog {
 			dialog.dispose();
 		});
 		
-		// After creating accept/decline and dialog:
-		dialog.getRootPane().setDefaultButton(accept); // Enter will activate Accept
+		dialog.getRootPane().setDefaultButton(accept);
 		
-		// Set accessible names/description
 		title.getAccessibleContext().setAccessibleName("Privacy Policy Title");
 		ta.getAccessibleContext().setAccessibleName("Privacy policy text");
 		ta.getAccessibleContext().setAccessibleDescription("Detailed description of how Questify stores data on this device");
@@ -70,13 +70,13 @@ public class PrivacyDialog {
 		decline.getAccessibleContext().setAccessibleName("Decline privacy policy");
 		decline.getAccessibleContext().setAccessibleDescription("Decline the privacy policy and exit the app");
 		
-		// Bind ESC to decline (close)
+		// ESC acts like decline.
 		dialog.getRootPane().registerKeyboardAction(e -> {
 		    accepted = false;
 		    dialog.dispose();
 		}, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 		
-		// Set initial focus to Accept button after showing (callable before setVisible)
+		// Ensure Accept gets initial focus when shown.
 		accept.addHierarchyListener(e -> {
 		    if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && accept.isShowing()) {
 		        accept.requestFocusInWindow();
@@ -88,7 +88,7 @@ public class PrivacyDialog {
 		return accepted;
 		}
 	
-	//AI generated but still related to app
+	 // Privacy policy text shown to users.
 	private String getPolicyText() {
 		return
 				  "Questify Privacy Policy — Version 1.1 (Last updated: 2025-10-28)\n\n"

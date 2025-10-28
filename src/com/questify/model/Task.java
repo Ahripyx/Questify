@@ -1,5 +1,6 @@
 package com.questify.model;
 
+// Simple task data holder.
 public class Task {
 	private String id;
 	private String title;
